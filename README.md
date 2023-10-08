@@ -36,8 +36,8 @@ The script reads KML files from the specified folder, extracts polygon and line 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## Acknowledgments
-Folium: https://python-visualization.github.io/folium/
-ElementTree: https://docs.python.org/3/library/xml.etree.elementtree.html
-Feel free to contribute to this project by submitting issues or pull requests.
+- Folium: https://python-visualization.github.io/folium/
+- ElementTree: https://docs.python.org/3/library/xml.etree.elementtree.html
+- Feel free to contribute to this project by submitting issues or pull requests.
 
 Happy mapping!

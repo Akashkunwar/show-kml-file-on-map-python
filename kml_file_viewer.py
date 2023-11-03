@@ -5,11 +5,14 @@ import shutil
 
 kml_folder = '/content/kml'
 
-def create_kmlmaps(kml_folder):
+def create_kmlmaps(kml_folder, x, output_folder):
+    # kml folder is the location of the folder where KMLs have been stored
+    # x is the name of KML viewer which is being generated as HTML file
+    # output_folder is the folder where the output KML Viewer in form of HTML to be stored
     latitudes = []
     longitudes = []
 
-    m = folium.Map(location=[0, 0], zoom_start=13, tiles='http://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', attr='Google Normal', name='Normal', max_native_zoom=20, max_zoom=20)
+    m = folium.Map(location=[0, 0], zoom_start=13, tiles='http://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', attr='Google Satellite', name='Satellite', max_native_zoom=20, max_zoom=20)
 
     for filename in os.listdir(kml_folder):
         if filename.endswith('.kml'):
@@ -36,17 +39,28 @@ def create_kmlmaps(kml_folder):
                     latitudes.append(avg_lat)
                     longitudes.append(avg_lon)
 
-                    properties = {"description": description_text} if description_text else {}
-
+                    # Create a GeoJSON feature with a red border
                     feature = {
                         "type": "Feature",
-                        "properties": properties,
+                        "properties": {
+                            "description": description_text,
+                            "color": "red"  # Change the border color to red
+                        },
                         "geometry": {
                             "type": "Polygon",
                             "coordinates": [coordinates]
                         }
                     }
                     features.append(feature)
+
+                    # Add a marker at the center with a pop-up tooltip and zoom behavior
+                    marker = folium.Marker(
+                        location=[avg_lat, avg_lon],
+                        icon=folium.Icon(color='blue'),  # You can change the marker color here
+                        popup=folium.Popup(description_text),
+                        zoomOnClick=True  # Enable zoom when clicking the marker
+                    )
+                    marker.add_to(m)
 
             geojson_data = {
                 "type": "FeatureCollection",
@@ -56,6 +70,7 @@ def create_kmlmaps(kml_folder):
             folium.GeoJson(
                 geojson_data,
                 name=filename.split('.')[0],
+                style_function=lambda x: {"color": x["properties"]["color"]},  # Set border color
                 tooltip=folium.GeoJsonTooltip(fields=['description'], labels=False) if any(feature["properties"].get("description") for feature in features) else None
             ).add_to(m)
 
@@ -63,15 +78,15 @@ def create_kmlmaps(kml_folder):
         map_center = [sum(latitudes) / len(latitudes), sum(longitudes) / len(longitudes)]
         m.location = map_center
 
+    # Add tile layers and layer control
     folium.TileLayer(tiles='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', attr='OpenStreetMap', name='OSM', max_native_zoom=20, max_zoom=20).add_to(m)
-    folium.TileLayer(tiles='http://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', attr='Google Satellite', name='Satellite', max_native_zoom=20, max_zoom=20).add_to(m)
+    folium.TileLayer(tiles='http://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', attr='Google Normal', name='Normal', max_native_zoom=20, max_zoom=20).add_to(m)
     folium.TileLayer(tiles='http://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', attr='Google Hybrid', name='Hybrid', max_native_zoom=20, max_zoom=20).add_to(m)
 
     folium.LayerControl().add_to(m)
 
-    map_file = 'plot_map.html'
+    # Specify the full path for saving the map file
+    map_file = os.path.join(output_folder, f"{x}_plot_map.html")
     m.save(map_file)
 
     print(f"Map saved to {map_file}")
-
-create_kmlmaps(kml_folder)
